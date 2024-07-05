@@ -32,6 +32,7 @@
 //   return nullptr;
 // }
 
+#include <algorithm>
 #include <cstring>
 #include <memory>
 #include <string>
@@ -46,6 +47,9 @@ public:
   completion &operator=(completion &&) noexcept = default;
   virtual ~completion() = default;
 
+  explicit completion(const items_type &items) : items_(items) {}
+  explicit completion(items_type &&items) : items_(std::move(items)) {}
+
   virtual char *generator(const char *text, int state) = 0;
 
 protected:
@@ -54,7 +58,8 @@ protected:
 
 class cmd_completion : public completion {
 public:
-  cmd_completion(const items_type &cmds) { items_ = cmds; }
+  using completion::completion;
+
   char *generator(const char *text, int state) override;
 
 private:
@@ -62,25 +67,24 @@ private:
   size_t len_ = 0;
 };
 
-char *cmd_completion::generator(const char *text, int state) {
-  if (!state) {
-    list_idx_ = 0;
-    len_ = std::strlen(text);
-  }
-  while (list_idx_ < items_.size()) {
-    const auto &cmd = items_[list_idx_++];
-    if (cmd.compare(0, len_, text) == 0) {
-      return std::strdup(cmd.c_str());
-    }
-  }
-  return nullptr;
-}
+// char *cmd_completion::generator(const char *text, int state) {
+//   if (!state) {
+//     list_idx_ = 0;
+//     len_ = std::strlen(text);
+//   }
+//   while (list_idx_ < items_.size()) {
+//     const auto &cmd = items_[list_idx_++];
+//     if (cmd.compare(0, len_, text) == 0) {
+//       return std::strdup(cmd.c_str());
+//     }
+//   }
+//   return nullptr;
+// }
 
-class parameter_completion : public completion {
+class param_completion : public completion {
 public:
-  parameter_completion(const std::vector<std::string> &params) {
-    items_ = params;
-  }
+  using completion::completion;
+
   char *generator(const char *text, int state) override;
 
 private:
@@ -88,29 +92,29 @@ private:
   size_t len_ = 0;
 };
 
-char *parameter_completion::generator(const char *text, int state) {
-  if (!state) {
-    list_idx_ = 0;
-    len_ = std::strlen(text);
-  }
-  while (list_idx_ < items_.size()) {
-    const auto &param = items_[list_idx_++];
-    if (param.compare(0, len_, text) == 0) {
-      return std::strdup(param.c_str());
-    }
-  }
-  return nullptr;
-}
+// char *param_completion::generator(const char *text, int state) {
+//   if (!state) {
+//     list_idx_ = 0;
+//     len_ = std::strlen(text);
+//   }
+//   while (list_idx_ < items_.size()) {
+//     const auto &param = items_[list_idx_++];
+//     if (param.compare(0, len_, text) == 0) {
+//       return std::strdup(param.c_str());
+//     }
+//   }
+//   return nullptr;
+// }
 
-class completion_factory {
-public:
-  static std::unique_ptr<completion>
-  create_command_completion(const std::vector<std::string> &commands) {
-    return std::make_unique<cmd_completion>(commands);
-  }
-
-  static std::unique_ptr<completion>
-  create_parameter_completion(const std::vector<std::string> &params) {
-    return std::make_unique<parameter_completion>(params);
-  }
-};
+// class completion_factory {
+// public:
+//   static std::unique_ptr<completion>
+//   create_command_completion(const std::vector<std::string> &commands) {
+//     return std::make_unique<cmd_completion>(commands);
+//   }
+//
+//   static std::unique_ptr<completion>
+//   create_parameter_completion(const std::vector<std::string> &params) {
+//     return std::make_unique<param_completion>(params);
+//   }
+// };
